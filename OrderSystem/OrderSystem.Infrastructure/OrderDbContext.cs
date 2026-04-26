@@ -11,6 +11,18 @@ namespace OrderSystem.Infrastructure
         public DbSet<Order> Orders { get; set; }
 
         public OrderDbContext(DbContextOptions<OrderDbContext> options)
-            : base(options) { }
+            : base(options)
+        {
+        }
+
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+            modelBuilder.Entity<Order>(entity =>
+            {
+                entity.HasKey(x => x.Id);
+                entity.Property(x => x.CustomerEmail).IsRequired();
+                entity.Property(x => x.Amount).HasColumnType("decimal(18,2)");
+            });
+        }
     }
 }
