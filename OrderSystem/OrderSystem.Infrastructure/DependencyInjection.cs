@@ -17,6 +17,8 @@ namespace OrderSystem.Infrastructure
 
             services.AddScoped<IOrderRepository, OrderRepository>();
 
+            services.AddSingleton<IMessagePublisher, RabbitMqPublisher>();
+
             return services;
         }
     }
