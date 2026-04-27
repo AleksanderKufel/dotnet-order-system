@@ -1,4 +1,5 @@
 ﻿using OrderSystem.Application;
+using OrderSystem.Domain;
 using OrderSystem.Infrastructure;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
@@ -37,11 +38,10 @@ namespace OrderSystem.Worker
 
             consumer.ReceivedAsync += async (sender, args) =>
             {
-                var body = args.Body.ToArray();
-                var message = Encoding.UTF8.GetString(body);
-
                 try
                 {
+                    var body = args.Body.ToArray();
+                    var message = Encoding.UTF8.GetString(body);
                     var orderEvent = JsonSerializer.Deserialize<OrderCreatedEvent>(message);
 
                     if (orderEvent != null)
@@ -49,25 +49,35 @@ namespace OrderSystem.Worker
                         using var scope = _scopeFactory.CreateScope();
                         var db = scope.ServiceProvider.GetRequiredService<OrderDbContext>();
 
-                        var order = await db.Orders.FindAsync(new object[] { orderEvent.OrderId }, stoppingToken);
+                        var order = await db.Orders.FindAsync(orderEvent.OrderId, stoppingToken);
 
                         if (order is not null)
                         {
+                            if (order.Status == OrderStatus.Processed)
+                            {
+                                Console.WriteLine($" [!] Order {order.Id} already processed. Skipping.");
+                                await _channel.BasicAckAsync(args.DeliveryTag, multiple: false);
+                                return;
+                            }
+
                             await Task.Delay(1000, stoppingToken); // Work simulation
                             order.MarkAsProcessed();
                             await db.SaveChangesAsync(stoppingToken);
                         }
                     }
+
+                    await _channel.BasicAckAsync(args.DeliveryTag, multiple: false);
                 }
                 catch (Exception ex)
                 {
-                    Console.WriteLine($" [!] Message processing failed: {ex.Message}");
+                    Console.WriteLine($" [!] Error processing message: {ex.Message}");
+                    await _channel.BasicNackAsync(args.DeliveryTag, multiple: false, requeue: true);
                 }
             };
 
             await _channel.BasicConsumeAsync(
                 queue: "orders",
-                autoAck: true, 
+                autoAck: false,
                 consumer: consumer,
                 cancellationToken: stoppingToken);
 
