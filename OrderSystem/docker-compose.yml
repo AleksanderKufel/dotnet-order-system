@@ -22,12 +22,47 @@ services:
     environment:
       RABBITMQ_DEFAULT_USER: guest
       RABBITMQ_DEFAULT_PASS: guest
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "check_port_connectivity"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
 
   redis:
     image: redis:7
     container_name: orders-redis
     ports:
       - "6379:6379"
+
+  api:
+    build:
+      context: .
+      dockerfile: OrderSystem.API/Dockerfile
+    container_name: orders-api
+    depends_on:
+      - postgres
+      - rabbitmq
+      - redis
+    environment:
+      ASPNETCORE_ENVIRONMENT: Docker
+    ports:
+      - "5000:8080"
+
+  worker:
+    build:
+      context: .
+      dockerfile: OrderSystem.Worker/Dockerfile
+    container_name: orders-worker
+    restart: always
+    depends_on:
+      postgres:
+        condition: service_started
+      rabbitmq:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    environment:
+      DOTNET_ENVIRONMENT: Docker
 
 volumes:
   postgres_data:
