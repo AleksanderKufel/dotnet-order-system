@@ -21,11 +21,12 @@ namespace OrderSystem.Infrastructure
 
             services.AddSingleton<IMessagePublisher, RabbitMqPublisher>();
 
+            var redisConnectionString = config.GetSection("Redis:Connection")?.Value ?? 
+                throw new InvalidOperationException("Redis connection is missing in configuration");
             // Use lazy loading to prevent the application from crashing on startup if Redis is not ready. 
             // The connection will be established on-demand during the first service request.
             services.AddSingleton<IConnectionMultiplexer>(x =>
-                ConnectionMultiplexer.Connect("localhost:6379"));
-
+                ConnectionMultiplexer.Connect(redisConnectionString));
             services.AddScoped<RedisCacheService>();
 
             return services;

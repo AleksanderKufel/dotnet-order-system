@@ -1,4 +1,5 @@
-﻿using OrderSystem.Application;
+﻿using Microsoft.Extensions.Configuration;
+using OrderSystem.Application;
 using RabbitMQ.Client;
 using System.Text;
 using System.Text.Json;
@@ -11,9 +12,11 @@ namespace OrderSystem.Infrastructure
         private IChannel? _channel;
         private readonly ConnectionFactory _factory;
 
-        public RabbitMqPublisher()
+        public RabbitMqPublisher(IConfiguration config)
         {
-            _factory = new ConnectionFactory { HostName = "localhost" };
+            var rabbitHost = config.GetRequiredSection("RabbitMQ:Host").Value ??
+                 throw new InvalidOperationException("RabbitMQ Host is missing in configuration");
+            _factory = new ConnectionFactory { HostName = rabbitHost };
         }
 
         public async Task PublishAsync<T>(T message, string queueName, CancellationToken cancellationToken = default)

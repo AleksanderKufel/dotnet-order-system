@@ -15,10 +15,12 @@ namespace OrderSystem.Worker
         private IChannel? _channel;
         private readonly ConnectionFactory _factory;
 
-        public OrderCreatedConsumer(IServiceScopeFactory scopeFactory)
+        public OrderCreatedConsumer(IServiceScopeFactory scopeFactory, IConfiguration config)
         {
             _scopeFactory = scopeFactory;
-            _factory = new ConnectionFactory { HostName = "localhost" };
+            var rabbitHost = config.GetRequiredSection("RabbitMQ:Host").Value ??
+                 throw new InvalidOperationException("RabbitMQ Host is missing in configuration");
+            _factory = new ConnectionFactory { HostName = rabbitHost };
         }
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
