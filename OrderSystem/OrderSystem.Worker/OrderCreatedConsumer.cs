@@ -25,8 +25,20 @@ namespace OrderSystem.Worker
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
-            _connection = await _factory.CreateConnectionAsync(stoppingToken);
-            _channel = await _connection.CreateChannelAsync(cancellationToken: stoppingToken);
+            while (!stoppingToken.IsCancellationRequested)
+            {
+                try
+                {
+                    _connection = await _factory.CreateConnectionAsync(stoppingToken);
+                    _channel = await _connection.CreateChannelAsync(cancellationToken: stoppingToken);
+                    break;
+                }
+                catch (Exception ex)
+                {
+                    // RabbitMQ connection failed. Retrying in 5 seconds...
+                    await Task.Delay(5000, stoppingToken);
+                }
+            }
 
             await _channel.QueueDeclareAsync(
                 queue: "orders",
