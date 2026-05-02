@@ -38,10 +38,17 @@ app.MapGet("/orders/{id}", async (Guid id, OrderDbContext db, RedisCacheService 
         return Results.NotFound();
     }
 
-    // Save the order to cache for future requests
-    await cache.SetAsync(cacheKey, order, TimeSpan.FromMinutes(10));
+    var dto = new OrderDto(
+        order.Id,
+        order.CustomerEmail,
+        order.Amount,
+        order.Status.ToString()
+    );
 
-    return Results.Ok(order);
+    // Save the order to cache for future requests
+    await cache.SetAsync(cacheKey, dto, TimeSpan.FromMinutes(10));
+
+    return Results.Ok(dto);
 });
 
 app.MapGet("/orders", async (OrderDbContext db) =>
