@@ -1,6 +1,10 @@
 <Solution>
+  <Folder Name="/Solution Items/">
+    <File Path="docker-compose.yml" />
+  </Folder>
   <Project Path="OrderSystem.API/OrderSystem.API.csproj" />
   <Project Path="OrderSystem.Application/OrderSystem.Application.csproj" Id="2efcd6e6-4b6b-4489-8375-a8aea0150d3a" />
   <Project Path="OrderSystem.Domain/OrderSystem.Domain.csproj" Id="9262c813-7406-4084-9005-d18c99a35059" />
   <Project Path="OrderSystem.Infrastructure/OrderSystem.Infrastructure.csproj" Id="0ff876c4-aa6f-4bec-8c87-a968b77b777c" />
+  <Project Path="OrderSystem.Worker/OrderSystem.Worker.csproj" />
 </Solution>

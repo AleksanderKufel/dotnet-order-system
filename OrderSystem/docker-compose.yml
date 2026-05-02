@@ -1,0 +1,68 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15
+    container_name: orders-db
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: orders
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: orders-rabbitmq
+    ports:
+      - "5672:5672"     # communication
+      - "15672:15672"   # web
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "check_port_connectivity"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7
+    container_name: orders-redis
+    ports:
+      - "6379:6379"
+
+  api:
+    build:
+      context: .
+      dockerfile: OrderSystem.API/Dockerfile
+    container_name: orders-api
+    depends_on:
+      - postgres
+      - rabbitmq
+      - redis
+    environment:
+      ASPNETCORE_ENVIRONMENT: Docker
+    ports:
+      - "5000:8080"
+
+  worker:
+    build:
+      context: .
+      dockerfile: OrderSystem.Worker/Dockerfile
+    container_name: orders-worker
+    restart: always
+    depends_on:
+      postgres:
+        condition: service_started
+      rabbitmq:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    environment:
+      DOTNET_ENVIRONMENT: Docker
+
+volumes:
+  postgres_data:

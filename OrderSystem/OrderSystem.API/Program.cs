@@ -1,23 +1,60 @@
+using OrderSystem.Application;
+using Microsoft.EntityFrameworkCore;
+using OrderSystem.Infrastructure;
+using OrderSystem.Domain;
+
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
+// Infrastructure
+builder.Services.AddInfrastructure(builder.Configuration);
 
-builder.Services.AddControllers();
-// Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
-builder.Services.AddOpenApi();
+// Application
+builder.Services.AddScoped<OrderService>();
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
-if (app.Environment.IsDevelopment())
+app.MapPost("/orders", async (CreateOrderRequest request, OrderService service) =>
 {
-    app.MapOpenApi();
-}
+    var id = await service.CreateOrder(request);
+    return Results.Ok(id);
+});
 
-app.UseHttpsRedirection();
+app.MapGet("/orders/{id}", async (Guid id, OrderDbContext db, RedisCacheService cache) =>
+{
+    string cacheKey = $"order:{id}";
 
-app.UseAuthorization();
+    // Try to get the order from cache first
+    var cachedOrder = await cache.GetAsync<Order>(cacheKey);
+    if (cachedOrder is not null)
+    {
+        return Results.Ok(cachedOrder);
+    }
 
-app.MapControllers();
+    // If not in cache, get it from the database
+    var order = await db.Orders.FindAsync(id);
+
+    if (order is null)
+    {
+        return Results.NotFound();
+    }
+
+    var dto = new OrderDto(
+        order.Id,
+        order.CustomerEmail,
+        order.Amount,
+        order.Status.ToString()
+    );
+
+    // Save the order to cache for future requests
+    await cache.SetAsync(cacheKey, dto, TimeSpan.FromMinutes(10));
+
+    return Results.Ok(dto);
+});
+
+app.MapGet("/orders", async (OrderDbContext db) =>
+{
+    var orders = await db.Orders.ToListAsync();
+    return Results.Ok(orders);
+});
 
 app.Run();
