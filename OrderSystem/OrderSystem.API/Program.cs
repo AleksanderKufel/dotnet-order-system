@@ -12,6 +12,14 @@ builder.Services.AddScoped<OrderService>();
 
 var app = builder.Build();
 
+// Convenience for local and Docker runs only. In production, migrations run as a separate deployment step.
+if (app.Environment.IsDevelopment() || app.Environment.IsEnvironment("Docker"))
+{
+    using var scope = app.Services.CreateScope();
+    var db = scope.ServiceProvider.GetRequiredService<OrderDbContext>();
+    await db.Database.MigrateAsync();
+}
+
 app.MapPost("/orders", async (CreateOrderRequest request, OrderService service) =>
 {
     var id = await service.CreateOrder(request);
