@@ -1,7 +1,6 @@
 using OrderSystem.Application;
 using Microsoft.EntityFrameworkCore;
 using OrderSystem.Infrastructure;
-using OrderSystem.Domain;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -24,7 +23,7 @@ app.MapGet("/orders/{id}", async (Guid id, OrderDbContext db, RedisCacheService 
     string cacheKey = $"order:{id}";
 
     // Try to get the order from cache first
-    var cachedOrder = await cache.GetAsync<Order>(cacheKey);
+    var cachedOrder = await cache.GetAsync<OrderDto>(cacheKey);
     if (cachedOrder is not null)
     {
         return Results.Ok(cachedOrder);
