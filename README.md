@@ -29,6 +29,7 @@ A small distributed system in .NET: an order comes in over HTTP, goes onto a que
 Requirements: Docker.
 
 ```bash
+cd OrderSystem
 docker compose up --build
 ```
 
