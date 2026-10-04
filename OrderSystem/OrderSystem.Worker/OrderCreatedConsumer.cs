@@ -62,7 +62,7 @@ namespace OrderSystem.Worker
                     {
                         using var scope = _scopeFactory.CreateScope();
                         var db = scope.ServiceProvider.GetRequiredService<OrderDbContext>();
-                        var cache = scope.ServiceProvider.GetRequiredService<RedisCacheService>();
+                        var cache = scope.ServiceProvider.GetRequiredService<ICacheService>();
 
                         var order = await db.Orders.FindAsync(orderEvent.OrderId, stoppingToken);
 
@@ -80,7 +80,7 @@ namespace OrderSystem.Worker
                             await db.SaveChangesAsync(stoppingToken);
 
                             // Remove the order from cache to ensure that the next read gets the updated status
-                            await cache.RemoveAsync($"order:{order.Id}");
+                            await cache.RemoveAsync(OrderCacheKeys.ForOrder(order.Id));
                         }
                     }
 
