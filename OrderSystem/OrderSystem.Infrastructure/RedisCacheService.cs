@@ -1,9 +1,10 @@
-﻿using StackExchange.Redis;
+﻿using OrderSystem.Application;
+using StackExchange.Redis;
 using System.Text.Json;
 
 namespace OrderSystem.Infrastructure
 {
-    public class RedisCacheService
+    public class RedisCacheService : ICacheService
     {
         private readonly IDatabase _db;
 
@@ -12,7 +13,7 @@ namespace OrderSystem.Infrastructure
             _db = redis.GetDatabase();
         }
 
-        public async Task SetAsync<T>(string key, T value, Expiration expiry = default)
+        public async Task SetAsync<T>(string key, T value, TimeSpan expiry)
         {
             if (value == null) return;
             

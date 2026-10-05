@@ -1,8 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
+using System.ComponentModel.DataAnnotations;
 
 namespace OrderSystem.Application
 {
-    public record CreateOrderRequest(string CustomerEmail, decimal Amount);
+    public record CreateOrderRequest(
+        [Required, EmailAddress, StringLength(254)] string CustomerEmail,
+        [Range(0.01, 1_000_000)] decimal Amount);
 }

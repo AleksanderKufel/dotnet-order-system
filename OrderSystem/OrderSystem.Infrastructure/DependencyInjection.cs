@@ -27,7 +27,7 @@ namespace OrderSystem.Infrastructure
             // The connection will be established on-demand during the first service request.
             services.AddSingleton<IConnectionMultiplexer>(x =>
                 ConnectionMultiplexer.Connect(redisConnectionString));
-            services.AddScoped<RedisCacheService>();
+            services.AddScoped<ICacheService, RedisCacheService>();
 
             return services;
         }

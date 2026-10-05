@@ -16,6 +16,9 @@ namespace OrderSystem.Domain
 
         public Order(string customerEmail, decimal amount)
         {
+            ArgumentException.ThrowIfNullOrWhiteSpace(customerEmail);
+            ArgumentOutOfRangeException.ThrowIfNegativeOrZero(amount);
+
             Id = Guid.NewGuid();
             CustomerEmail = customerEmail;
             Amount = amount;
