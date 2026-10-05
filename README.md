@@ -57,4 +57,4 @@ Listed rather than hidden — these are the things I would add next, in this ord
 - **No dead-letter queue.** A message that always throws is requeued indefinitely. This needs bounded retries with backoff and a DLQ for what still fails.
 - **Idempotency is a read-then-write check**, which holds for one consumer but not for several running in parallel. The robust version is a unique constraint on the message id.
 - **No automated tests or CI here yet** — planned with Testcontainers for PostgreSQL and RabbitMQ, covering the full path from `POST` to `Processed`. Tests and a CI pipeline are in place in the sibling repo, [dotnet-reservation-system](https://github.com/AleksanderKufel/dotnet-reservation-system).
-- **Operational gaps.** Logging goes to the console instead of `ILogger` with structured output, there are no health checks for PostgreSQL, RabbitMQ and Redis, and `GET /orders` returns entities with no paging or validation.
+- **Operational gaps.** Logging goes to the console instead of `ILogger` with structured output, and there are no health checks for PostgreSQL, RabbitMQ and Redis.
